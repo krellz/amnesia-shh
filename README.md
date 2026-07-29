@@ -5,7 +5,7 @@
 [![Licença: MIT](https://img.shields.io/badge/Licença-MIT-blue.svg)](LICENSE)
 ![Versão](https://img.shields.io/badge/versão-1.0.0-informational)
 
-Plataforma web de partilha de segredos temporários com arquitetura **Zero-Knowledge**: o servidor nunca tem acesso ao conteúdo em claro, só armazena blobs cifrados com expiração automática.
+Plataforma web de partilha de segredos temporários com arquitetura **Zero-Knowledge**: o servidor nunca tem acesso ao conteúdo em claro, só armazena blobs encriptados com expiração automática.
 
 ![Screenshot principal](docs/screenshots/01-home.png)
 
@@ -13,9 +13,9 @@ Plataforma web de partilha de segredos temporários com arquitetura **Zero-Knowl
 
 O Amnesia Shh resolve um problema comum: partilhar uma password, uma chave de API ou uma nota confidencial por chat ou email deixa esse conteúdo para sempre nos históricos de mensagens de ambas as partes. O Amnesia Shh gera um link de uso único (ou com TTL configurável) que, depois de lido ou de expirar, deixa de existir — tanto no servidor como em qualquer histórico de conversas, porque nunca circula o conteúdo em claro, só o link.
 
-O projeto nasceu como trabalho da unidade curricular de Computação Distribuída, mas foi construído com práticas de produção a sério: cifragem no cliente, pipeline CI/CD completa, deploy em Kubernetes com TLS automático e GitOps.
+O projeto nasceu como trabalho da unidade curricular de Computação Distribuída, mas foi construído com práticas de produção a sério: encriptação no cliente, pipeline CI/CD completa, deploy em Kubernetes com TLS automático e GitOps.
 
-**Princípio Zero-Knowledge, em linguagem simples:** a chave de cifragem é gerada no browser e nunca sai dele — viaja apenas no fragmento (`#...`) da URL do link, uma parte que os browsers **nunca enviam** para nenhum servidor. O backend recebe e guarda apenas o blob já cifrado (AES-256-GCM); mesmo com acesso total à base de dados Redis, ninguém consegue ler o conteúdo original sem a chave que só existe nesse link.
+**Princípio Zero-Knowledge, em linguagem simples:** a chave de encriptação é gerada no browser e nunca sai dele — viaja apenas no fragmento (`#...`) da URL do link, uma parte que os browsers **nunca enviam** para nenhum servidor. O backend recebe e guarda apenas o blob já encriptado (AES-GCM-256); mesmo com acesso total à base de dados Redis, ninguém consegue ler o conteúdo original sem a chave que só existe nesse link.
 
 ---
 
@@ -27,9 +27,8 @@ O projeto nasceu como trabalho da unidade curricular de Computação Distribuíd
 | Link gerado | ![Link gerado](docs/screenshots/02-link-gerado.png) |
 | Visualização do segredo | ![Visualização do segredo](docs/screenshots/03-view-secret.png) |
 | Segredo destruído após leitura | ![Segredo destruído](docs/screenshots/04-secret-destroyed.png) |
-| ArgoCD — sincronização | ![ArgoCD sync](docs/screenshots/05-argocd-sync.png) |
-| `kubectl get pods` | ![kubectl get pods](docs/screenshots/06-kubectl-pods.png) |
-
+| ArgoCD | ![ArgoCD](docs/screenshots/05-argocd-sync.png) |
+| Firewall | ![Firewall](docs/screenshots/firewall.png) |
 ---
 
 ## Arquitetura
@@ -39,9 +38,9 @@ O projeto nasceu como trabalho da unidade curricular de Computação Distribuíd
 ```mermaid
 flowchart LR
     subgraph Browser["Browser (Zero-Knowledge)"]
-        A[Web Crypto API<br/>AES-256-GCM]
+        A[Web Crypto API<br/>AES-GCM-256]
     end
-    A -->|HTTPS: blob cifrado| B[nginx<br/>frontend estático + proxy /api]
+    A -->|HTTPS: blob encriptado| B[nginx<br/>frontend estático + proxy /api]
     B -->|proxy_pass /api/*| C[Flask + Gunicorn<br/>backend]
     C -->|SET com TTL / GETDEL| D[(Redis)]
 ```
@@ -89,7 +88,7 @@ flowchart LR
 
 | Componente | Tecnologia | Justificação |
 |---|---|---|
-| Cifragem | Web Crypto API (AES-256-GCM) | API nativa do browser, sem dependências externas, chave nunca sai do cliente |
+| Encriptação | Web Crypto API (AES-GCM-256) | API nativa do browser, sem dependências externas, chave nunca sai do cliente |
 | Frontend | HTML + JavaScript vanilla + Tailwind CSS | Sem build step necessário; simplicidade para uma UI pequena e focada |
 | Servidor de estáticos / proxy | nginx (alpine) | Serve o frontend e faz proxy de `/api` para o backend numa só origem, evitando CORS |
 | Backend | Python 3.11 + Flask + Flask-RESTX + Gunicorn | API leve com Swagger automático (`/docs`); Gunicorn para servir em produção com múltiplos workers |
@@ -321,7 +320,7 @@ kubectl get pods -n amnesia-shh
 ├── frontend/                 # UI estática servida por nginx
 │   ├── index.html             # criação de segredo
 │   ├── view.html               # leitura/destruição de segredo
-│   ├── crypto.js                # AES-256-GCM via Web Crypto API
+│   ├── crypto.js                # AES-GCM-256 via Web Crypto API
 │   ├── script.js                 # lógica de criação (chama a API)
 │   ├── nginx.conf                # proxy /api + security headers
 │   └── Dockerfile
@@ -357,13 +356,13 @@ kubectl get pods -n amnesia-shh
 ### Modelo de ameaças
 
 **O que protege:**
-- Leitura do conteúdo por quem tem acesso à base de dados Redis ou aos logs do servidor (só existe o blob cifrado).
+- Leitura do conteúdo por quem tem acesso à base de dados Redis ou aos logs do servidor (só existe o blob encriptado).
 - Interceção em trânsito, graças a TLS obrigatório entre o browser e o Traefik.
 - Reutilização de um segredo de leitura única — a operação `GETDEL` é atómica, elimina condições de corrida entre leituras concorrentes.
 - Retenção indevida de segredos — todos expiram por TTL, mesmo que nunca sejam lidos.
 
 **O que não protege:**
-- Um dispositivo do remetente ou do destinatário comprometido (malware, captura de ecrã, keylogger) antes/depois da leitura — a cifragem é feita no cliente, não substitui a segurança do endpoint.
+- Um dispositivo do remetente ou do destinatário comprometido (malware, captura de ecrã, keylogger) antes/depois da leitura — a encriptação é feita no cliente, não substitui a segurança do endpoint.
 - Abuso de disponibilidade — não existe rate limiting aplicacional (ver Limitações).
 - Alguém que intercete o link **antes** da primeira leitura (ex.: partilhado por um canal já comprometido) — o link em si é a credencial.
 - Acesso root à infraestrutura (Droplet, cluster) — está fora do âmbito da aplicação.
@@ -378,15 +377,17 @@ Existe também um `Middleware` CRD do Traefik em `k8s/middleware.yaml` com a mes
 
 ### Zero-knowledge, em detalhe
 
-A chave AES-256-GCM é gerada no browser com `window.crypto.subtle.generateKey`, e é colocada no fragmento (`#`) da URL do link — a parte da URL que os browsers **nunca incluem** em pedidos HTTP nem em logs de servidor/proxy. O backend só recebe e devolve o blob cifrado; não existe, em nenhum ponto do sistema, um momento em que o servidor tenha simultaneamente acesso à chave e ao conteúdo cifrado.
+A chave AES-GCM-256 é gerada no browser com `window.crypto.subtle.generateKey`, e é colocada no fragmento (`#`) da URL do link — a parte da URL que os browsers **nunca incluem** em pedidos HTTP nem em logs de servidor/proxy. O backend só recebe e devolve o blob encriptado; não existe, em nenhum ponto do sistema, um momento em que o servidor tenha simultaneamente acesso à chave e ao conteúdo encriptado.
 
 ### Testes externos
 
-<!-- Substituir pelos teus prints reais destes testes -->
 | Teste | Resultado |
 |---|---|
 | SSL Labs (qualidade da configuração TLS) | ![SSL Labs report](docs/screenshots/ssl-labs-report.png) |
 | OWASP ZAP (scan de vulnerabilidades web) | ![OWASP ZAP report](docs/screenshots/owasp-zap-report.png) |
+| CURK (análise dos headers, brute force) | ![CURL](docs/screenshots/curl.png) |
+| Nikto e Nmap (reconhecimento de portas e vulnerabilidades) | ![Nikto e Nmap](docs/screenshots/nikto_nmap.png) |
+
 
 ---
 
@@ -395,7 +396,7 @@ A chave AES-256-GCM é gerada no browser com `window.crypto.subtle.generateKey`,
 | Decisão | Alternativa considerada | Porquê esta escolha |
 |---|---|---|
 | Redis | PostgreSQL / outra BD relacional | TTL nativo por chave e `GETDEL` atómico resolvem exatamente o problema (expiração + leitura única) sem lógica extra de limpeza |
-| AES-256-GCM (Web Crypto API) | OpenPGP.js ou biblioteca de cifragem em JS | API nativa do browser — sem dependências externas para auditar, cifra autenticada (GCM) e desempenho nativo |
+| AES-256-GCM (Web Crypto API) | OpenPGP.js ou biblioteca de encriptação em JS | API nativa do browser — sem dependências externas para auditar, encriptação autenticada (GCM) e desempenho nativo |
 | k3s | Kubernetes gerido (EKS/GKE/DOKS) | Distribuição leve, cabe numa única VPS pequena, sem custo de control plane gerido — adequado à escala e ao orçamento de um projeto académico/portfólio |
 | GitOps (ArgoCD) | Deploy push-based (`kubectl apply` direto na pipeline) | O cluster nunca precisa de credenciais expostas ao CI; o `git log` da pasta `k8s/` torna-se o histórico auditável do que está em produção |
 
@@ -415,13 +416,13 @@ A chave AES-256-GCM é gerada no browser com `window.crypto.subtle.generateKey`,
 
 ## Créditos e contexto
 
-Este projeto foi desenvolvido como Trabalho 2 da unidade curricular de **Computação Distribuída**, do curso de **Engenharia Informática**.
+Este projeto foi desenvolvido na unidade curricular de **Computação Distribuída**, do curso de **Engenharia Informática**.
 
 Desenvolvido em conjunto com [**@JoaoSouza129**](https://github.com/JoaoSouza129).
 
 Arquitetura inspirada no [Yopass](https://github.com/jhaals/yopass) como referência de design — implementação própria, não é um fork.
 
-**Autor desta cópia:** Miguel Duarte — [GitHub @krellz](https://github.com/krellz) — [LinkedIn](<o-teu-link-linkedin>)
+**Autor desta cópia:** Miguel Duarte — [GitHub @krellz](https://github.com/krellz)
 
 ---
 
