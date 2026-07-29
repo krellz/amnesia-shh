@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: ghcr.io/krellz/amnesia-shh-backend:sha-ef46df4
+        image: ghcr.io/krellz/amnesia-shh-backend:sha-d3af38b
         imagePullPolicy: Always
         ports:
         - containerPort: 5050
