@@ -385,7 +385,7 @@ A chave AES-GCM-256 é gerada no browser com `window.crypto.subtle.generateKey`,
 |---|---|
 | SSL Labs (qualidade da configuração TLS) | ![SSL Labs report](docs/screenshots/ssl-labs-report.png) |
 | OWASP ZAP (scan de vulnerabilidades web) | ![OWASP ZAP report](docs/screenshots/owasp-zap-report.png) |
-| CURK (análise dos headers, brute force) | ![CURL](docs/screenshots/curl.png) |
+| CURL (análise dos headers, brute force) | ![CURL](docs/screenshots/curl.png) |
 | Nikto e Nmap (reconhecimento de portas e vulnerabilidades) | ![Nikto e Nmap](docs/screenshots/nikto_nmap.png) |
 
 
