@@ -97,7 +97,7 @@ class SecurityHeadersMiddleware:
                 "script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline' 'unsafe-eval'; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src 'self' https://fonts.gstatic.com; "
-                "connect-src 'self' https://amnesia-shh.duckdns.org; "
+                "connect-src 'self' https://<o-teu-dominio>; "
                 "img-src 'self' data: https://online.swagger.io;"
             )
             headers.append(("Content-Security-Policy", csp_policy))

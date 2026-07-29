@@ -11,10 +11,10 @@ spec:
   ingressClassName: traefik
   tls:
   - hosts:
-    - amnesia-shh.duckdns.org
+    - <o-teu-dominio>
     secretName: amnesia-tls
   rules:
-  - host: amnesia-shh.duckdns.org
+  - host: <o-teu-dominio>
     http:
       paths:
       - path: /docs

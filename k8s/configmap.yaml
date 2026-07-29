@@ -9,4 +9,4 @@ data:
   LOG_LEVEL: "INFO"
   MAX_SECRET_BYTES: "10000"
   MAX_TTL_SECONDS: "604800"
-  ALLOWED_ORIGIN: "https://amnesia-shh.duckdns.org"
+  ALLOWED_ORIGIN: "https://<o-teu-dominio>"

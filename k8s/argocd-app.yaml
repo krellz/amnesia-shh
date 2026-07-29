@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/JoaoSouza129/NullKnowledge.git
+    repoURL: https://github.com/krellz/amnesia-shh.git
     targetRevision: main
     path: k8s
     directory:

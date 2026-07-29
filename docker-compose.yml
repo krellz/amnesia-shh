@@ -28,6 +28,8 @@ services:
     build: ./backend
     image: amnesia-shh-backend:v1.0.0
     container_name: amnesia-shh-backend
+    ports:
+      - "5050:5050"
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -58,6 +60,8 @@ services:
     build: ./frontend
     image: amnesia-shh-frontend:v1.0.0
     container_name: amnesia-shh-frontend
+    ports:
+      - "8080:80"
     environment:
       - BACKEND_HOST=backend
       - BACKEND_PORT=5050
