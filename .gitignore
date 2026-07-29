@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Kubernetes / kubeconfig
+kubeconfig*
+*.kubeconfig
+.kube/
+
+# Segredos genéricos
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+
+# IDEs
+.vscode/
+.idea/
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Ferramentas de agentes
+.claude/
+
+# Notas pessoais
+comandos.md
+
+# Node
+node_modules/

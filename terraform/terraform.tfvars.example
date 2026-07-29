@@ -1,0 +1,4 @@
+droplet_ip           = "0.0.0.0"
+ssh_private_key_path = "~/.ssh/id_rsa"
+ssh_user             = "root"
+acme_email           = "o-teu-email@exemplo.com"
